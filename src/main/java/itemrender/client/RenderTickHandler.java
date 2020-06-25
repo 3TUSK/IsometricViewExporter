@@ -9,19 +9,17 @@
  */
 package itemrender.client;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+
+import org.lwjgl.opengl.GL11;
 
 import itemrender.client.keybind.KeybindRenderInventoryBlock;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.opengl.GL11;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class RenderTickHandler {
     public static boolean renderPreview = false;
     public static KeybindRenderInventoryBlock keybindToRender;
-
-    public RenderTickHandler() {
-    }
 
     @SubscribeEvent
     public void tick(TickEvent.RenderTickEvent event) {
@@ -30,7 +28,7 @@ public class RenderTickHandler {
                 int originalTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 
                 // Bind framebuffer texture
-                keybindToRender.fbo.bind();
+                keybindToRender.fbo.unbindTexture();
                 GL11.glBegin(GL11.GL_QUADS);
                 GL11.glTexCoord2f(0, 0);
                 GL11.glVertex2i(0, 0);

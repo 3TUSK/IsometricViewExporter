@@ -10,8 +10,12 @@
 
 package itemrender.client.export;
 
-import itemrender.ItemRenderMod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import itemrender.ItemRenderConfig;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 
 /**
@@ -20,6 +24,9 @@ import net.minecraft.item.ItemStack;
  * @author Meow J
  */
 public class ItemData {
+
+    private static final Logger LOGGER = LogManager.getLogger("Item Render");
+
     private String name;
     private String englishName;
     private String registerName;
@@ -32,12 +39,12 @@ public class ItemData {
     private transient ItemStack itemStack;
 
     public ItemData(ItemStack itemStack) {
-        if (ItemRenderMod.debugMode)
-            ItemRenderMod.instance.log.info(I18n.format("itemrender.msg.processing", itemStack.getItem().getUnlocalizedName() + "@" + itemStack.getMetadata()));
+        if (ItemRenderConfig.debugMode.get())
+            LOGGER.info(I18n.format("itemrender.msg.processing", itemStack.getItem().getRegistryName()));
         name = null;
         englishName = null;
         registerName = itemStack.getItem().getRegistryName().toString();
-        type = ExportUtils.INSTANCE.getType(itemStack);
+        type = (itemStack.getItem() instanceof BlockItem) ? "Block" : "Item";
         maxStackSize = itemStack.getMaxStackSize();
         maxDurability = itemStack.getMaxDamage() + 1;
         smallIcon = ExportUtils.INSTANCE.getSmallIcon(itemStack);

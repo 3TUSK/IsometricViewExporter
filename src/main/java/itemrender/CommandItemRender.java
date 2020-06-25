@@ -9,45 +9,46 @@
  */
 package itemrender;
 
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.TextComponentString;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 
-public class CommandItemRender extends CommandBase {
+public final class CommandItemRender {
 
-    @Override
-    public String getName() {
-        return "itemrender";
+    public CommandItemRender(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(Commands.literal("itemrender")
+            .then(Commands.literal("scale")
+                .then(Commands.argument("value", FloatArgumentType.floatArg(0F, 2F))
+                    .executes(CommandItemRender::changeScale)
+                ).executes(CommandItemRender::displayScale)
+            ).executes(CommandItemRender::sendHelp)
+        );
     }
 
-    @Override
-    public String getUsage(ICommandSender sender) {
-        return "/itemrender scale [value]";
+    private static int sendHelp(CommandContext<CommandSource> context) {
+        CommandSource sender = context.getSource();
+        sender.sendFeedback(new StringTextComponent(TextFormatting.RED + "/itemrender scale [value]"), false);
+        sender.sendFeedback(new StringTextComponent(TextFormatting.AQUA + "Execute this command to control entity/item rendering scale."), false);
+        sender.sendFeedback(new StringTextComponent(TextFormatting.AQUA + "Scale Range: (0.0, 2.0]. Default: 1.0. Current: " + ItemRenderMod.renderScale), false);
+        return Command.SINGLE_SUCCESS;
     }
 
-    @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        if (args.length == 0) {
-            sender.sendMessage(new TextComponentString(TextFormatting.RED + "/itemrender scale [value]"));
-            sender.sendMessage(new TextComponentString(TextFormatting.AQUA + "Execute this command to control entity/item rendering scale."));
-            sender.sendMessage(new TextComponentString(TextFormatting.AQUA + "Scale Range: (0.0, 2.0]. Default: 1.0. Current: " + ItemRenderMod.renderScale));
-        } else if (args[0].equalsIgnoreCase("scale")) {
-            if (args.length == 2) {
-                float value = Float.valueOf(args[1]);
-                if (value > 0.0F && value <= 2.0F) {
-                    ItemRenderMod.renderScale = Float.valueOf(args[1]);
-                    sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Scale: " + value));
-                } else {
-                    sender.sendMessage(new TextComponentString(TextFormatting.RED + "Scale Range: (0.0, 2.0]"));
-                }
-            } else {
-                sender.sendMessage(new TextComponentString(TextFormatting.AQUA + "Current Scale: " + ItemRenderMod.renderScale));
-                sender.sendMessage(new TextComponentString(TextFormatting.RED + "Execute /itemrender scale [value] to control entity/item rendering " + TextFormatting.RED + "scale."));
-            }
-        } else
-            throw new CommandException("/itemrender scale [value]", 0);
+    private static int changeScale(CommandContext<CommandSource> context) {
+        ItemRenderMod.renderScale = FloatArgumentType.getFloat(context, "scale");
+        context.getSource().sendFeedback(new StringTextComponent(TextFormatting.GREEN + "Scale: " + ItemRenderMod.renderScale), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int displayScale(CommandContext<CommandSource> context) {
+        CommandSource sender = context.getSource();
+        sender.sendFeedback(new StringTextComponent(TextFormatting.AQUA + "Current Scale: " + ItemRenderMod.renderScale), false);
+        sender.sendFeedback(new StringTextComponent(TextFormatting.RED + "Execute /itemrender scale [value] to control entity/item rendering " + TextFormatting.RED + "scale."), false);    
+        return Command.SINGLE_SUCCESS;
     }
 }

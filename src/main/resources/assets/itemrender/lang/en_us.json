@@ -1,0 +1,19 @@
+{
+  "item_render.key": "Item Render",
+  "item_render.key.block": "Render Block",
+  "item_render.key.block_grid": "Render Block (Grid)",
+  "item_render.key.entity": "Render Entity",
+  "item_render.key.entity_grid": "Render Entity (Grid)",
+  "item_render.key.toggle": "Toggle Render",
+  "item_render.key.export": "Export Mods",
+  "item_render.key.currentplayer": "Render Current Player",
+
+  "item_render.config.mainblock": "Main size of exported block image",
+  "item_render.config.gridblock": "Grid size of exported block image",
+  "item_render.config.mainentity": "Main size of exported entity image",
+  "item_render.config.gridentity": "Grid size of exported entity image",
+  "item_render.config.player": "Size of exported player image",
+  "item_render.config.vanilla": "Export Vanilla items",
+  "item_render.config.debug": "Enable debug mode",
+  "item_render.config.blacklist": "Export blacklist, use registry name of blocks/items"
+}

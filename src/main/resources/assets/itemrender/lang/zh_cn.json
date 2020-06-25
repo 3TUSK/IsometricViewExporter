@@ -1,0 +1,19 @@
+{
+  "item_render.key": "物品渲染导出",
+  "item_render.key.block": "渲染方块",
+  "item_render.key.block_grid": "渲染方块（Grid）",
+  "item_render.key.entity": "渲染实体",
+  "item_render.key.entity_grid": "渲染实体（Grid）",
+  "item_render.key.toggle": "切换渲染显示",
+  "item_render.key.export": "导出所有Mod",
+  "item_render.key.currentplayer": "渲染当前玩家",
+
+  "item_render.config.mainblock": "导出主方块图像的大小",
+  "item_render.config.gridblock": "导出缩略方块图像的大小",
+  "item_render.config.mainentity": "导出主实体图像的大小",
+  "item_render.config.gridentity": "导出缩略实体图像的大小",
+  "item_render.config.player": "导出玩家图像的大小",
+  "item_render.config.vanilla": "导出原版物品",
+  "item_render.config.debug": "启用调试模式",
+  "item_render.config.blacklist": "导出黑名单，格式为方块/物品的注册名"
+}

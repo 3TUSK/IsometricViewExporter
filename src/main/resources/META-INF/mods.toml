@@ -1,0 +1,15 @@
+modLoader="javafml"
+
+loaderVersion="[31,)"
+
+[[mods]]
+modId="itemrender"
+version="${file.jarVersion}"
+displayName="Isometric Render Exporter"
+
+credits="""Kobata, for the original mod.
+Meow J, for the past maintenance."""
+
+authors="3TUSK"
+
+description="Item Render ported to 1.15.2"

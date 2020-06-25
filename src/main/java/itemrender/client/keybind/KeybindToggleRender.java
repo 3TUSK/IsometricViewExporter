@@ -9,30 +9,26 @@
  */
 package itemrender.client.keybind;
 
-
 import itemrender.client.RenderTickHandler;
-import net.minecraft.client.gui.GuiChat;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
-import org.lwjgl.input.Keyboard;
+
+
+import org.lwjgl.glfw.GLFW;
 
 public class KeybindToggleRender {
 
     public final KeyBinding key;
 
     public KeybindToggleRender() {
-        key = new KeyBinding(I18n.format("itemrender.key.toggle"), Keyboard.KEY_O, "Item Render");
+        key = new KeyBinding("item_render.key.toggle", GLFW.GLFW_KEY_O, "item_render.key");
         ClientRegistry.registerKeyBinding(key);
     }
 
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (FMLClientHandler.instance().isGUIOpen(GuiChat.class))
-            return;
         if (key.isPressed()) {
             RenderTickHandler.renderPreview = !RenderTickHandler.renderPreview;
         }

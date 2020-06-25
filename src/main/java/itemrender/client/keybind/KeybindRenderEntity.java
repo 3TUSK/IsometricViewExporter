@@ -9,40 +9,41 @@
  */
 package itemrender.client.keybind;
 
-
 import itemrender.client.rendering.FBOHelper;
 import itemrender.client.rendering.Renderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.entity.LivingEntity;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class KeybindRenderEntity {
 
     private final KeyBinding key;
+    private final int size;
     private FBOHelper fbo;
     private String filenameSuffix = "";
 
     public KeybindRenderEntity(int textureSize, String filename_suffix, int keyVal, String des) {
-        fbo = new FBOHelper(textureSize);
+        this.size = textureSize;
         filenameSuffix = filename_suffix;
-        key = new KeyBinding(des, keyVal, "Item Render");
+        key = new KeyBinding(des, keyVal, "item_render.key");
         ClientRegistry.registerKeyBinding(key);
     }
 
-
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (FMLClientHandler.instance().isGUIOpen(GuiChat.class))
-            return;
         if (key.isPressed()) {
-            Minecraft minecraft = FMLClientHandler.instance().getClient();
-            if (minecraft.pointedEntity != null)
-                Renderer.renderEntity((EntityLivingBase) minecraft.pointedEntity, fbo, filenameSuffix, false);
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.pointedEntity instanceof LivingEntity) {
+                if (this.fbo == null) {
+                    this.fbo = new FBOHelper(this.size);
+                    this.fbo.init();
+                }
+                Renderer.renderEntity((LivingEntity) mc.pointedEntity, fbo, filenameSuffix, false);
+                this.fbo.clear();
+            }
         }
     }
 }

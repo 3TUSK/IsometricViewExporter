@@ -12,23 +12,27 @@ package itemrender.client.export;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import itemrender.ItemRenderMod;
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrays;
+import itemrender.ItemRenderConfig;
 import itemrender.client.rendering.FBOHelper;
 import itemrender.client.rendering.Renderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderItem;
+import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.resources.Language;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraftforge.fml.client.FMLClientHandler;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.EntityRegistry;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,15 +46,27 @@ import java.util.List;
  * @author Meow J
  */
 public class ExportUtils {
+    
     public static ExportUtils INSTANCE;
+
+    private static final Logger LOGGER = LogManager.getLogger("Item Render");
+    private static final Marker MARKER = MarkerManager.getMarker("ExportUtil");
 
     private FBOHelper fboSmall;
     private FBOHelper fboLarge;
     private FBOHelper fboEntity;
-    private RenderItem itemRenderer = Minecraft.getMinecraft().getRenderItem();
+    private ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
     private List<ItemData> itemDataList = new ArrayList<ItemData>();
     private List<MobData> mobDataList = new ArrayList<MobData>();
-    public ExportUtils() {
+
+    private boolean init = false;
+
+    public void init() {
+        if (init) {
+            return;
+        }
+        init = true;
+        RenderSystem.assertThread(RenderSystem::isOnGameThread);
         // Hardcoded value for mcmod.cn only, don't change this unless the website updates
         fboSmall = new FBOHelper(32);
         fboLarge = new FBOHelper(128);
@@ -59,11 +75,7 @@ public class ExportUtils {
 
 
     public String getLocalizedName(ItemStack itemStack) {
-        return itemStack.getDisplayName();
-    }
-    
-    public String getType(ItemStack itemStack) {
-        return (itemStack.getItem() instanceof ItemBlock) ? "Block" : "Item";
+        return itemStack.getDisplayName().getString();
     }
 
     public String getSmallIcon(ItemStack itemStack) {
@@ -74,21 +86,21 @@ public class ExportUtils {
         return Renderer.getItemBase64(itemStack, fboLarge, itemRenderer);
     }
 
-    public String getEntityIcon(EntityEntry Entitymob){
+    public String getEntityIcon(EntityType<?> Entitymob){
         return Renderer.getEntityBase64(Entitymob, fboEntity);
     }
     
     private String getItemOwner(ItemStack itemStack) {
         ResourceLocation registryName = itemStack.getItem().getRegistryName();
-        return registryName == null ? "unnamed" : registryName.getResourceDomain();
+        return registryName == null ? "unnamed" : registryName.getNamespace();
     }
-    private String getEntityOwner(EntityEntry Entitymob) {
-        ResourceLocation registryName = Entitymob.getRegistryName();
-        return registryName == null ? "unnamed" : registryName.getResourceDomain();
+    private String getEntityOwner(EntityType<?> entityType) {
+        ResourceLocation registryName = entityType.getRegistryName();
+        return registryName == null ? "unnamed" : registryName.getNamespace();
     }
     
     public void exportMods() throws IOException{
-        Minecraft minecraft = FMLClientHandler.instance().getClient();
+        Minecraft minecraft = Minecraft.getInstance();
         itemDataList.clear();
         mobDataList.clear();
         List<String> modList = new ArrayList<String>();
@@ -98,21 +110,21 @@ public class ExportUtils {
         MobData mobData;
         String identifier;
 
-        for (ItemStack itemStack : ItemList.items) {
-            if (itemStack == null) continue;
-            if (getItemOwner(itemStack).equals("minecraft") && !ItemRenderMod.exportVanillaItems) continue;
+        for (Item item : ForgeRegistries.ITEMS) {
+            String owner = item.getRegistryName().getNamespace();
+            if ("minecraft".equals(owner) && !ItemRenderConfig.exportVanillaItems.get())
+                continue;
+            identifier = item.getRegistryName().toString();//.getUnlocalizedName() + "@" + itemStack.getMetadata();
+            if (ItemRenderConfig.blacklist.get().contains(identifier)) continue;
 
-            identifier = itemStack.getItem().getUnlocalizedName() + "@" + itemStack.getMetadata();
-            if (ItemRenderMod.blacklist.contains(identifier)) continue;
-
-            itemData = new ItemData(itemStack);
+            itemData = new ItemData(new ItemStack(item));
             itemDataList.add(itemData);
-            if (!modList.contains(getItemOwner(itemStack))) modList.add(getItemOwner(itemStack));
+            if (!modList.contains(owner)) modList.add(owner);
         }
-        for (EntityEntry Entity : ForgeRegistries.ENTITIES) {
+        for (EntityType<?> Entity : ForgeRegistries.ENTITIES) {
             if (Entity == null) continue;
-//            if (!(Entity.newInstance(minecraft.world) instanceof EntityLivingBase)||!(Entity.newInstance(minecraft.world) instanceof EntityMob)) continue;
-            if (getEntityOwner(Entity).equals("minecraft") && !ItemRenderMod.exportVanillaItems) continue;
+            if (!(Entity.create(minecraft.world) instanceof LivingEntity)) continue;
+            if (getEntityOwner(Entity).equals("minecraft") && !ItemRenderConfig.exportVanillaItems.get()) continue;
 
             mobData = new MobData(Entity);
             mobDataList.add(mobData);
@@ -120,44 +132,45 @@ public class ExportUtils {
         }
         
         // Since refreshResources takes a long time, only refresh once for all the items
-        minecraft.getLanguageManager().setCurrentLanguage(new Language("zh_CN", "涓浗", "绠�浣撲腑鏂�", false));
-        minecraft.gameSettings.language = "zh_CN";
-        minecraft.refreshResources();
+        minecraft.getLanguageManager().setCurrentLanguage(new Language("zh_cn", "中国", "简体中文", false));
+        minecraft.gameSettings.language = "zh_cn";
+        minecraft.getLanguageManager().onResourceManagerReload(minecraft.getResourceManager());
         minecraft.gameSettings.saveOptions();
 
         for (ItemData data : itemDataList) {
-            if (ItemRenderMod.debugMode)
-                ItemRenderMod.instance.log.info(I18n.format("itemrender.msg.addCN", data.getItemStack().getItem().getUnlocalizedName() + "@" + data.getItemStack().getMetadata()));
+            if (ItemRenderConfig.debugMode.get())
+                LOGGER.info(MARKER, I18n.format("itemrender.msg.addCN", data.getItemStack().getItem().getRegistryName()));
             data.setName(this.getLocalizedName(data.getItemStack()));
         }
         for (MobData data : mobDataList) {
-            if (ItemRenderMod.debugMode)
-                ItemRenderMod.instance.log.info(I18n.format("itemrender.msg.addCN", data.getMob().getRegistryName()));
-            data.setName(new TextComponentTranslation("entity." + data.getMob().getName() + ".name", new Object[0]).getFormattedText());
+            if (ItemRenderConfig.debugMode.get())
+                LOGGER.info(MARKER, I18n.format("itemrender.msg.addCN", data.getMob().getRegistryName()));
+            data.setName(I18n.format(data.getMob().getTranslationKey(), ObjectArrays.EMPTY_ARRAY));
         }
 
-        minecraft.getLanguageManager().setCurrentLanguage(new Language("en_US", "US", "English", false));
-        minecraft.gameSettings.language = "en_US";
-        minecraft.refreshResources();
-        minecraft.fontRenderer.setUnicodeFlag(false);
+        minecraft.getLanguageManager().setCurrentLanguage(new Language("en_us", "US", "English", false));
+        minecraft.gameSettings.language = "en_us";
+        minecraft.getLanguageManager().onResourceManagerReload(minecraft.getResourceManager());
         minecraft.gameSettings.saveOptions();
 
         for (ItemData data : itemDataList) {
-            if (ItemRenderMod.debugMode)
-                ItemRenderMod.instance.log.info(I18n.format("itemrender.msg.addEN", data.getItemStack().getItem().getUnlocalizedName() + "@" + data.getItemStack().getMetadata()));
+            if (ItemRenderConfig.debugMode.get())
+                LOGGER.info(MARKER, I18n.format("itemrender.msg.addEN", data.getItemStack().getItem().getRegistryName()));
             data.setEnglishName(this.getLocalizedName(data.getItemStack()));
         }
         
         for (MobData data : mobDataList) {
-            if (ItemRenderMod.debugMode)
-                ItemRenderMod.instance.log.info(I18n.format("itemrender.msg.addEN", data.getMob().getRegistryName()));
-            data.setEnglishname(new TextComponentTranslation("entity." + data.getMob().getName() + ".name", new Object[0]).getFormattedText());
+            if (ItemRenderConfig.debugMode.get())
+                LOGGER.info(MARKER, I18n.format("itemrender.msg.addEN", data.getMob().getRegistryName()));
+            data.setEnglishname(I18n.format(data.getMob().getTranslationKey(), ObjectArrays.EMPTY_ARRAY));
         }
         
         File export;
         File export1;
         for (String modid : modList) {
-            export = new File(minecraft.mcDataDir, String.format("export/"+modid+"_item.json", modid.replaceAll("[^A-Za-z0-9()\\[\\]]", "")));
+            // Since 1.13+, namespace part of ResourceLocation MUST match regex [A-Za-z0-9.-_]+, 
+            // so sanitization is no longer needed. We just concat them together.
+            export = new File(minecraft.gameDir, "export/" + modid + "_item.json");
             if (!export.getParentFile().exists()) export.getParentFile().mkdirs();
             if (!export.exists()) export.createNewFile();
             PrintWriter pw = new PrintWriter(export, "UTF-8");
@@ -170,7 +183,7 @@ public class ExportUtils {
 
         }
         for (String modid : modList) {
-        export1 = new File(minecraft.mcDataDir, String.format("export/"+modid+"_entity.json", modid.replaceAll("[^A-Za-z0-9()\\[\\]]", "")));
+        export1 = new File(minecraft.gameDir, "export/" + modid + "_entity.json");
         if (!export1.getParentFile().exists()) export1.getParentFile().mkdirs();
         if (!export1.exists()) export1.createNewFile();
         PrintWriter pw1 = new PrintWriter(export1, "UTF-8");

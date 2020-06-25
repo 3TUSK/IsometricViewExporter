@@ -10,14 +10,14 @@
 
 package itemrender.client.export;
 
-import itemrender.ItemRenderMod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+
+import itemrender.ItemRenderConfig;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityMob;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.common.registry.EntityEntry;
-import net.minecraftforge.fml.common.registry.EntityRegistry;
+import net.minecraft.entity.EntityType;
 
 /**
  * Created by Meow J on 8/17/2015.
@@ -25,26 +25,30 @@ import net.minecraftforge.fml.common.registry.EntityRegistry;
  * @author Meow J
  */
 public class MobData {
+
+    private static final Logger LOGGER = LogManager.getLogger("Item Render");
+    private static final Marker MARKER = MarkerManager.getMarker("EntityData");
+
     private String name;
     private String Englishname;
     private String mod;
     private String registerName;
     private String Icon;
-    private transient EntityEntry mob;
+    private transient EntityType<?> mob;
    
-    public MobData(EntityEntry Entitymob){
+    public MobData(EntityType<?> type){
 
-        if (ItemRenderMod.debugMode)
-            ItemRenderMod.instance.log.info(I18n.format("itemrender.msg.processing", Entitymob.getName()));
+        if (ItemRenderConfig.debugMode.get())
+            LOGGER.info(MARKER, I18n.format("itemrender.msg.processing", type.getName()));
         name = null;
-        Englishname=null;
-        mod = Entitymob.getRegistryName().getResourceDomain();
-        registerName = Entitymob.getRegistryName().toString();    
-        Icon = ExportUtils.INSTANCE.getEntityIcon(Entitymob);
-        this.mob = Entitymob;
+        Englishname = null;
+        mod = type.getRegistryName().getNamespace();
+        registerName = type.getRegistryName().toString();    
+        Icon = ExportUtils.INSTANCE.getEntityIcon(type);
+        this.mob = type;
     }
 
-    public EntityEntry getMob() {
+    public EntityType<?> getMob() {
         return mob;
     }
 

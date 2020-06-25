@@ -12,21 +12,26 @@ package itemrender.client.rendering;
 
 import itemrender.ItemRenderMod;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.entity.EntityRendererManager;
+import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraftforge.fml.client.FMLClientHandler;
-import net.minecraftforge.fml.common.registry.EntityEntry;
 
 import org.lwjgl.opengl.GL11;
 
+import info.tritusk.isometric.ImageUtil;
+
 import java.io.File;
+
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 
 /**
  * Created by Jerrell Fang on 2/23/2015.
@@ -35,228 +40,141 @@ import java.io.File;
  */
 public class Renderer {
 
-    public static void renderEntity(EntityLivingBase entity, FBOHelper fbo, String filenameSuffix, boolean renderPlayer) {
-        Minecraft minecraft = FMLClientHandler.instance().getClient();
-        float scale = ItemRenderMod.renderScale;
+    private static void doRenderEntity(LivingEntity entity, FBOHelper fbo, boolean renderPlayer) {
+        float scale = 1F; //ItemRenderMod.renderScale;
         fbo.begin();
 
-        AxisAlignedBB aabb = entity.getEntityBoundingBox();
-        double minX = aabb.minX - entity.posX;
-        double maxX = aabb.maxX - entity.posX;
-        double minY = aabb.minY - entity.posY;
-        double maxY = aabb.maxY - entity.posY;
-        double minZ = aabb.minZ - entity.posZ;
-        double maxZ = aabb.maxZ - entity.posZ;
+        AxisAlignedBB aabb = entity.getBoundingBox();
+        double minX = aabb.minX - entity.getPosX();
+        double maxX = aabb.maxX - entity.getPosX();
+        double minY = aabb.minY - entity.getPosY();
+        double maxY = aabb.maxY - entity.getPosY();
+        double minZ = aabb.minZ - entity.getPosZ();
+        double maxZ = aabb.maxZ - entity.getPosZ();
 
         double minBound = Math.min(minX, Math.min(minY, minZ));
         double maxBound = Math.max(maxX, Math.max(maxY, maxZ));
 
         double boundLimit = Math.max(Math.abs(minBound), Math.abs(maxBound));
 
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
-        GlStateManager.ortho(-boundLimit * 0.75, boundLimit * 0.75, -boundLimit * 1.25, boundLimit * 0.25, -100.0, 100.0);
+        RenderSystem.matrixMode(GL11.GL_PROJECTION);
+        RenderSystem.pushMatrix();
+        RenderSystem.loadIdentity();
+        RenderSystem.ortho(-boundLimit * 0.75, boundLimit * 0.75, boundLimit * 0.25, -boundLimit * 1.25, -100D, 100D);
 
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
+        RenderSystem.matrixMode(GL11.GL_MODELVIEW);
 
         // Render entity
-        GlStateManager.enableColorMaterial();
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(0, 0, 50.0F);
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef(0F, 0F, 50F);
 
         if (renderPlayer)
-            GlStateManager.scale(-1F, 1F, 1F);
+            RenderSystem.scalef(-1F, 1F, 1F);
         else
-            GlStateManager.scale(-scale, scale, scale);
+            RenderSystem.scalef(-scale, scale, scale);
 
-        GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
+        MatrixStack transform = new MatrixStack();
+        transform.rotate(Vector3f.ZP.rotationDegrees(180F)); 
         float f2 = entity.renderYawOffset;
         float f3 = entity.rotationYaw;
         float f4 = entity.rotationPitch;
         float f5 = entity.prevRotationYawHead;
         float f6 = entity.rotationYawHead;
-        GlStateManager.rotate(135.0F, 0.0F, 1.0F, 0.0F);
         RenderHelper.enableStandardItemLighting();
-        GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
 
-        GlStateManager.rotate((float) Math.toDegrees(Math.asin(Math.tan(Math.toRadians(30)))), 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(-45, 0.0F, 1.0F, 0.0F);
+        transform.rotate(Vector3f.XP.rotation((float) Math.asin(Math.tan(Math.toRadians(30)))));
+        transform.rotate(Vector3f.YN.rotationDegrees(45F));
 
-        entity.renderYawOffset = (float) Math.atan((double) (1 / 40.0F)) * 20.0F;
-        entity.rotationYaw = (float) Math.atan((double) (1 / 40.0F)) * 40.0F;
-        entity.rotationPitch = -((float) Math.atan((double) (1 / 40.0F))) * 20.0F;
+        entity.renderYawOffset = (float) Math.atan(1 / 40.0) * 20.0F;
+        entity.rotationYaw = (float) Math.atan(1 / 40.0) * 40.0F;
+        entity.rotationPitch = -((float) Math.atan(1 / 40.0)) * 20.0F;
         entity.rotationYawHead = entity.rotationYaw;
         entity.prevRotationYawHead = entity.rotationYaw;
-        GlStateManager.translate(0.0F, 0.0F, 0.0F);
-        RenderManager rendermanager = Minecraft.getMinecraft().getRenderManager();
-        rendermanager.setPlayerViewY(180.0F);
-        rendermanager.setRenderShadow(false);
-        rendermanager.renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, true);
-        rendermanager.setRenderShadow(true);
+        EntityRendererManager manager = Minecraft.getInstance().getRenderManager();
+        /*manager.setPlayerViewY(180.0F);*/ // Not sure, but my test result shows that it is no longer needed
+        manager.setRenderShadow(false);
+        IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource();
+        manager.renderEntityStatic(entity, 0D, 0D, 0D, 0F, 1F, transform, buffer, 0x00F000F0);
+        buffer.finish();
+        manager.setRenderShadow(true);
         entity.renderYawOffset = f2;
         entity.rotationYaw = f3;
         entity.rotationPitch = f4;
         entity.prevRotationYawHead = f5;
         entity.rotationYawHead = f6;
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
         RenderHelper.disableStandardItemLighting();
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.disableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
 
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GlStateManager.popMatrix();
+        RenderSystem.matrixMode(GL11.GL_PROJECTION);
+        RenderSystem.popMatrix();
 
         fbo.end();
-        String name = EntityList.getEntityString(entity) == null ? entity.getName() : EntityList.getEntityString(entity);
-        fbo.saveToFile(new File(minecraft.mcDataDir, renderPlayer ? "rendered/player.png" : String.format("rendered/entity_%s%s.png", name.replaceAll("[^A-Za-z0-9()\\[\\]]", ""), filenameSuffix)));
-        fbo.restoreTexture();
     }
 
-    public static void renderItem(ItemStack itemStack, FBOHelper fbo, String filenameSuffix, RenderItem itemRenderer) {
-        Minecraft minecraft = FMLClientHandler.instance().getClient();
+    private static void doRenderItem(ItemStack itemStack, FBOHelper fbo, ItemRenderer itemRenderer) {
         float scale = ItemRenderMod.renderScale;
-        fbo.begin();
-
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
-        GlStateManager.ortho(0, 16, 0, 16, -150.0F, 150.0F);
-
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-        RenderHelper.enableGUIStandardItemLighting();
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.enableColorMaterial();
-        GlStateManager.enableLighting();
-
-        GlStateManager.translate(8 * (1 - scale), 8 * (1 - scale), 0);
-        GlStateManager.scale(scale, scale, scale);
-
+        RenderSystem.matrixMode(GL11.GL_PROJECTION);
+        RenderSystem.pushMatrix();
+        RenderSystem.loadIdentity();
+        RenderSystem.ortho(0D, 16D, 16D, 0D, -150D, 150D);
+        RenderSystem.matrixMode(GL11.GL_MODELVIEW);
+        RenderHelper.setupGui3DDiffuseLighting();
+        RenderSystem.enableRescaleNormal();
+        RenderSystem.enableColorMaterial();
+        RenderSystem.enableLighting();
+        RenderSystem.translatef(8 * (1 - scale), 8 * (1 - scale), 0);
+        RenderSystem.scalef(scale, scale, scale);
         itemRenderer.renderItemIntoGUI(itemStack, 0, 0);
-
-        GlStateManager.disableLighting();
-        RenderHelper.disableStandardItemLighting();
-
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-
-        fbo.end();
-        fbo.saveToFile(new File(minecraft.mcDataDir, String.format("rendered/item_%s_%d%s.png", itemStack.getItem().getUnlocalizedName().replaceAll("[^A-Za-z0-9()\\[\\]]", ""), itemStack.getItemDamage(), filenameSuffix)));
-        fbo.restoreTexture();
+        RenderSystem.disableRescaleNormal();
+        RenderSystem.disableLighting();
+        RenderSystem.matrixMode(GL11.GL_PROJECTION);
+        RenderSystem.popMatrix();
     }
 
-    public static String getItemBase64(ItemStack itemStack, FBOHelper fbo, RenderItem itemRenderer) {
-        String base64;
-        float scale = ItemRenderMod.renderScale;
-        fbo.begin();
+    public static void renderItem(ItemStack stack, FBOHelper fbo, String suffix, ItemRenderer itemRenderer) {
+        Minecraft mc = Minecraft.getInstance();
+        doRenderItem(stack, fbo, itemRenderer);
+        try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
+            ImageUtil.saveImage(image, new File(mc.gameDir, String.format("rendered/item_%s_%s.png", 
+                stack.getItem().getRegistryName().toString().replace(':', '.'), suffix)));
+        }
+        fbo.unbindTexture();
+    }
 
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
-        GlStateManager.ortho(0, 16, 0, 16, -150.0F, 150.0F);
-
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-        RenderHelper.enableGUIStandardItemLighting();
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.enableColorMaterial();
-        GlStateManager.enableLighting();
-
-        GlStateManager.translate(8 * (1 - scale), 8 * (1 - scale), 0);
-        GlStateManager.scale(scale, scale, scale);
-
-        itemRenderer.renderItemIntoGUI(itemStack, 0, 0);
-
-        GlStateManager.disableLighting();
-        RenderHelper.disableStandardItemLighting();
-
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-
-        fbo.end();
-        base64 = fbo.getBase64();
-        fbo.restoreTexture();
+    public static String getItemBase64(ItemStack stack, FBOHelper fbo, ItemRenderer itemRenderer) {
+        doRenderItem(stack, fbo, itemRenderer);
+        String base64 = "";
+        try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
+            base64 = ImageUtil.base64(image);
+        }
+        fbo.unbindTexture();
         return base64;
     }
-    public static String getEntityBase64(EntityEntry Entitymob, FBOHelper fbo){
-    	 String base64;
-    	Minecraft minecraft = FMLClientHandler.instance().getClient();
-    	if(!(Entitymob.newInstance(minecraft.world) instanceof EntityLivingBase)){
-    		return "";
-    	}else{
-        float scale = ItemRenderMod.renderScale;
-        fbo.begin();
-        EntityLivingBase entity = (EntityLivingBase) Entitymob.newInstance(minecraft.world);
-        AxisAlignedBB aabb = entity.getEntityBoundingBox();
-        double minX = aabb.minX - entity.posX;
-        double maxX = aabb.maxX - entity.posX;
-        double minY = aabb.minY - entity.posY;
-        double maxY = aabb.maxY - entity.posY;
-        double minZ = aabb.minZ - entity.posZ;
-        double maxZ = aabb.maxZ - entity.posZ;
 
-        double minBound = Math.min(minX, Math.min(minY, minZ));
-        double maxBound = Math.max(maxX, Math.max(maxY, maxZ));
+    public static void renderEntity(LivingEntity entity, FBOHelper fbo, String filenameSuffix, boolean renderPlayer) {
+        Minecraft mc = Minecraft.getInstance();
+        doRenderEntity(entity, fbo, renderPlayer);
+        String name = entity.getType().getRegistryName().toString().replace(':', '.');
+        try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
+            ImageUtil.saveImage(image, new File(mc.gameDir, renderPlayer ? "rendered/player.png"
+                : String.format("rendered/entity_%s%s.png", name, filenameSuffix)));
+        }
+        fbo.unbindTexture();
+    }
 
-        double boundLimit = Math.max(Math.abs(minBound), Math.abs(maxBound));
-
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GlStateManager.pushMatrix();
-        GlStateManager.loadIdentity();
-        GlStateManager.ortho(-boundLimit * 0.75, boundLimit * 0.75, -boundLimit * 1.25, boundLimit * 0.25, -100.0, 100.0);
-
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-
-        // Render entity
-        GlStateManager.enableColorMaterial();
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(0, 0, 50.0F);
-        GlStateManager.scale(-scale, scale, scale);
-
-        GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
-        float f2 = entity.renderYawOffset;
-        float f3 = entity.rotationYaw;
-        float f4 = entity.rotationPitch;
-        float f5 = entity.prevRotationYawHead;
-        float f6 = entity.rotationYawHead;
-        GlStateManager.rotate(135.0F, 0.0F, 1.0F, 0.0F);
-        RenderHelper.enableStandardItemLighting();
-        GlStateManager.rotate(-135.0F, 0.0F, 1.0F, 0.0F);
-
-        GlStateManager.rotate((float) Math.toDegrees(Math.asin(Math.tan(Math.toRadians(30)))), 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(-45, 0.0F, 1.0F, 0.0F);
-
-        entity.renderYawOffset = (float) Math.atan((double) (1 / 40.0F)) * 20.0F;
-        entity.rotationYaw = (float) Math.atan((double) (1 / 40.0F)) * 40.0F;
-        entity.rotationPitch = -((float) Math.atan((double) (1 / 40.0F))) * 20.0F;
-        entity.rotationYawHead = entity.rotationYaw;
-        entity.prevRotationYawHead = entity.rotationYaw;
-        GlStateManager.translate(0.0F, 0.0F, 0.0F);
-        RenderManager rendermanager = Minecraft.getMinecraft().getRenderManager();
-        rendermanager.setPlayerViewY(180.0F);
-        rendermanager.setRenderShadow(false);
-        rendermanager.renderEntity(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, true);
-        rendermanager.setRenderShadow(true);
-        entity.renderYawOffset = f2;
-        entity.rotationYaw = f3;
-        entity.rotationPitch = f4;
-        entity.prevRotationYawHead = f5;
-        entity.rotationYawHead = f6;
-        GlStateManager.popMatrix();
-        RenderHelper.disableStandardItemLighting();
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.disableTexture2D();
-        GlStateManager.setActiveTexture(OpenGlHelper.defaultTexUnit);
-
-        GlStateManager.matrixMode(GL11.GL_PROJECTION);
-        GlStateManager.popMatrix();
-
-        fbo.end();
-        base64 = fbo.getBase64();
-        fbo.restoreTexture();
-        return base64;
+    public static String getEntityBase64(EntityType<?> type, FBOHelper fbo) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Entity entity = type.create(minecraft.world);
+        if (entity instanceof LivingEntity) {
+            doRenderEntity((LivingEntity) entity, fbo, false);
+            String base64 = "";
+            try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
+                base64 = ImageUtil.base64(image);
+            }
+            fbo.unbindTexture();
+            return base64;
+        } else {
+            return "";
         }
     }
 }

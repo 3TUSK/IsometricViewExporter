@@ -9,44 +9,46 @@
  */
 package itemrender.client.keybind;
 
-
 import itemrender.client.rendering.FBOHelper;
 import itemrender.client.rendering.Renderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiChat;
-import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 
 public class KeybindRenderInventoryBlock {
 
     private final KeyBinding key;
+    private final int size;
     public FBOHelper fbo;
     private String filenameSuffix = "";
-    private RenderItem itemRenderer = Minecraft.getMinecraft().getRenderItem();
 
     public KeybindRenderInventoryBlock(int textureSize, String filename_suffix, int keyVal, String des) {
-        fbo = new FBOHelper(textureSize);
+        this.size = textureSize;
         filenameSuffix = filename_suffix;
-        key = new KeyBinding(des, keyVal, "Item Render");
+        key = new KeyBinding(des, keyVal, "item_render.key");
         ClientRegistry.registerKeyBinding(key);
     }
 
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (FMLClientHandler.instance().isGUIOpen(GuiChat.class))
-            return;
-        if (key.isPressed()) {
-            Minecraft minecraft = FMLClientHandler.instance().getClient();
-            if (minecraft.player != null) {
-                ItemStack current = minecraft.player.getHeldItemMainhand();
-                if (current != null && current.getItem() != null) {
-                    Renderer.renderItem(current, fbo, filenameSuffix, itemRenderer);
+        Minecraft mc = Minecraft.getInstance();
+        if (key.isPressed() && mc.player != null) {
+            ItemStack current = mc.player.getHeldItemMainhand();
+            if (!current.isEmpty()) {
+                if (this.fbo == null) {
+                    this.fbo = new FBOHelper(size);
+                    this.fbo.init();
                 }
+                this.fbo.begin();
+                Renderer.renderItem(current, this.fbo, filenameSuffix, mc.getItemRenderer());
+                this.fbo.end();
+                this.fbo.clear();
+                mc.player.sendMessage(new StringTextComponent(String.format("Saved as rendered/item_%s%s.png", 
+                    current.getItem().getRegistryName().toString().replace(':', '.'), filenameSuffix)));
             }
         }
     }

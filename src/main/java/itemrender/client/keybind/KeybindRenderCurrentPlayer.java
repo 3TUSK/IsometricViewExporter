@@ -9,42 +9,39 @@
  */
 package itemrender.client.keybind;
 
-
 import itemrender.client.rendering.FBOHelper;
 import itemrender.client.rendering.Renderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiChat;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.entity.LivingEntity;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import org.lwjgl.input.Keyboard;
+import net.minecraftforge.client.event.InputEvent;
+
+import org.lwjgl.glfw.GLFW;
 
 public class KeybindRenderCurrentPlayer {
 
     private final KeyBinding key;
+    private final int size;
     private FBOHelper fbo;
 
     public KeybindRenderCurrentPlayer(int textureSize) {
-        fbo = new FBOHelper(textureSize);
-        key = new KeyBinding(I18n.format("itemrender.key.currentplayer"), Keyboard.KEY_P, "Item Render");
+        this.size = textureSize;
+        key = new KeyBinding("item_render.key.currentplayer", GLFW.GLFW_KEY_P, "item_render.key");
         ClientRegistry.registerKeyBinding(key);
     }
 
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (FMLClientHandler.instance().isGUIOpen(GuiChat.class))
-            return;
-        if (key.isPressed()) {
-            Minecraft minecraft = FMLClientHandler.instance().getClient();
-            Entity player = ReflectionHelper.getPrivateValue(Minecraft.class, minecraft, "field_175622_Z", "renderViewEntity");
-            if (player != null)
-                Renderer.renderEntity((EntityLivingBase) player, fbo, "", true);
+        Minecraft mc = Minecraft.getInstance();
+        if (key.isPressed() && mc.renderViewEntity instanceof LivingEntity) {
+            if (this.fbo == null) {
+                this.fbo = new FBOHelper(this.size);
+                this.fbo.init();
+            }
+            Renderer.renderEntity((LivingEntity) mc.renderViewEntity, fbo, "", true);
+            this.fbo.clear();
         }
     }
 }
