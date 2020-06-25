@@ -1,70 +1,89 @@
+import java.time.Instant
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+
 buildscript {
     repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
         jcenter()
-        maven { url = "http://files.minecraftforge.net/maven" }
+        mavenCentral()
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-    }
-}
-apply plugin: 'net.minecraftforge.gradle.forge'
-
-ext.configFile = file "build.properties"
-
-configFile.withReader {
-    def prop = new Properties()
-    prop.load(it)
-    project.ext.config = new ConfigSlurper().parse prop
-}
-
-sourceCompatibility = targetCompatibility = '1.8'
-compileJava {
-    sourceCompatibility = targetCompatibility = '1.8'
-}
-
-version = config.mod_version
-group= "itemrender" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "ItemRender"
-
-minecraft {
-    version = config.minecraft_version + "-" + config.forge_version
-    runDir = "run"
-
-    mappings = "snapshot_20171003"
-	
-	replaceIn "ItemRenderMod.java"
-        replace "@VERSION@", config.mod_version
-}
-processResources
-{
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
-        
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-    dependencies {
-        compile fileTree(dir: 'libs',includes: ['*.jar'])        
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
     }
 }
 
-// deobf jars
-task deobfJar(type: Jar) {
-    from sourceSets.main.output
-    classifier = 'deobf'
-}
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
 
-// make sure all of these happen when we run build
-build.dependsOn sourceJar, deobfJar
+version = "4.0"
+group = 'cn.mcmod'
+archivesBaseName = 'IsometricViewExporter'
+
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
 compileJava.options.encoding = 'UTF-8'
+
+minecraft {
+    mappings channel: 'snapshot', version: '20200513-1.15.1'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods {
+                isometric {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'info'
+            mods {
+                isometric {
+                    source sourceSets.main
+                }
+            }
+        }
+        // We don't have any data to generate. So we drop the runData config.
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.15.2-31.2.4'
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title": "ItemRender",
+            "Specification-Vendor": "Kobata, Jerrell Fang et al.",
+            "Specification-Version": "1", // We are version 1 of ourselves
+            "Implementation-Title": "Isometric View Exporter",
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor": "3TUSK",
+            "Implementation-Timestamp": DateTimeFormatter.ISO_INSTANT.format(Instant.now().truncatedTo(ChronoUnit.SECONDS))
+        ])
+    }
+}
+
+// Publish to… somewhere
+def reobfFile = file("$buildDir/reobfJar/output.jar")
+def reobfArtifact = artifacts.add('default', reobfFile) {
+    type 'jar'
+    builtBy 'reobfJar'
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifact reobfArtifact
+        }
+    }
+    repositories {
+        maven {
+            url "file:///${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
