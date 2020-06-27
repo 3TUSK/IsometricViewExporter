@@ -13,12 +13,15 @@ public final class ItemRenderConfig {
     public static final int DEFAULT_GRID_ENTITY_SIZE = 128;
     public static final int DEFAULT_PLAYER_SIZE = 1024;
 
+    public static ForgeConfigSpec theSpec;
+
     public static ForgeConfigSpec.IntValue mainBlockSize;
     public static ForgeConfigSpec.IntValue gridBlockSize;
     public static ForgeConfigSpec.IntValue mainEntitySize;
     public static ForgeConfigSpec.IntValue gridEntitySize;
     public static ForgeConfigSpec.IntValue playerSize;
     public static ForgeConfigSpec.BooleanValue debugMode;
+    public static ForgeConfigSpec.DoubleValue renderScale;
 
     public static ForgeConfigSpec.BooleanValue exportVanillaItems;
     public static ForgeConfigSpec.BooleanValue useFancyPrinting;
@@ -44,11 +47,14 @@ public final class ItemRenderConfig {
         debugMode = specBuilder.comment("Enable debug mode")
             .translation("item_render.config.debug")
             .define("DebugMode", false);
+        renderScale = specBuilder.comment("Control entity/item rendering scale.")
+            .translation("item_render.config.render_scale")
+            .defineInRange("RenderScale", 1.0, 0.0, 2.0);
         specBuilder.pop();
 
         specBuilder.comment("Options for data exporting").push("Export");
         exportVanillaItems = specBuilder.comment("Export Vanilla items")
-            .translation("item_render.config.export_vanilla")
+            .translation("item_render.config.vanilla")
             .define("ExportVanillaItems", false);
         useFancyPrinting = specBuilder.comment("Exported JSON files will have nice indentation if this set to true.",
             "Default to false to reduce the size of files.")

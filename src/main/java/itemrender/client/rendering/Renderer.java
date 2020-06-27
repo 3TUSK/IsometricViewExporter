@@ -10,7 +10,7 @@
 
 package itemrender.client.rendering;
 
-import itemrender.ItemRenderMod;
+import itemrender.ItemRenderConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.ItemRenderer;
@@ -41,7 +41,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 public class Renderer {
 
     private static void doRenderEntity(LivingEntity entity, FBOHelper fbo, boolean renderPlayer) {
-        float scale = 1F; //ItemRenderMod.renderScale;
+        double scale = ItemRenderConfig.renderScale.get();
         fbo.begin();
 
         AxisAlignedBB aabb = entity.getBoundingBox();
@@ -69,9 +69,9 @@ public class Renderer {
         RenderSystem.translatef(0F, 0F, 50F);
 
         if (renderPlayer)
-            RenderSystem.scalef(-1F, 1F, 1F);
+            RenderSystem.scaled(-1.0, 1.0, 1.0);
         else
-            RenderSystem.scalef(-scale, scale, scale);
+            RenderSystem.scaled(-scale, scale, scale);
 
         MatrixStack transform = new MatrixStack();
         transform.rotate(Vector3f.ZP.rotationDegrees(180F)); 
@@ -112,7 +112,7 @@ public class Renderer {
     }
 
     private static void doRenderItem(ItemStack itemStack, FBOHelper fbo, ItemRenderer itemRenderer) {
-        float scale = ItemRenderMod.renderScale;
+        double scale = ItemRenderConfig.renderScale.get();
         RenderSystem.matrixMode(GL11.GL_PROJECTION);
         RenderSystem.pushMatrix();
         RenderSystem.loadIdentity();
@@ -122,8 +122,8 @@ public class Renderer {
         RenderSystem.enableRescaleNormal();
         RenderSystem.enableColorMaterial();
         RenderSystem.enableLighting();
-        RenderSystem.translatef(8 * (1 - scale), 8 * (1 - scale), 0);
-        RenderSystem.scalef(scale, scale, scale);
+        RenderSystem.translated(8 * (1 - scale), 8 * (1 - scale), 0);
+        RenderSystem.scaled(scale, scale, scale);
         itemRenderer.renderItemIntoGUI(itemStack, 0, 0);
         RenderSystem.disableRescaleNormal();
         RenderSystem.disableLighting();

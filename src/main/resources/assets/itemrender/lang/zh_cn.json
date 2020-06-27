@@ -8,12 +8,20 @@
   "item_render.key.export": "导出所有Mod",
   "item_render.key.currentplayer": "渲染当前玩家",
 
-  "item_render.config.mainblock": "导出主方块图像的大小",
-  "item_render.config.gridblock": "导出缩略方块图像的大小",
-  "item_render.config.mainentity": "导出主实体图像的大小",
-  "item_render.config.gridentity": "导出缩略实体图像的大小",
+  "item_render.config": "物品渲染导出 配置",
+  "item_render.config.main_block": "导出主方块图像的大小",
+  "item_render.config.grid_block": "导出缩略方块图像的大小",
+  "item_render.config.main_entity": "导出主实体图像的大小",
+  "item_render.config.grid_entity": "导出缩略实体图像的大小",
   "item_render.config.player": "导出玩家图像的大小",
   "item_render.config.vanilla": "导出原版物品",
   "item_render.config.debug": "启用调试模式",
-  "item_render.config.blacklist": "导出黑名单，格式为方块/物品的注册名"
+  "item_render.config.fancy_printing": "启用导出数据排版",
+  "item_render.config.blacklist": "导出黑名单，格式为方块/物品的注册名",
+  "item_render.config.render_scale": "渲染图像缩放因数",
+
+  "item_render.gui.config.reset": "恢复默认值（暂未实现）",
+  "item_render.gui.config.save": "保存",
+  "item_render.gui.config.enabled": "启用",
+  "item_render.gui.config.disabled": "禁用"
 }

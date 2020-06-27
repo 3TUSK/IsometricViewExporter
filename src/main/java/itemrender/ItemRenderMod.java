@@ -30,30 +30,29 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
+import info.tritusk.isometric.ConfigScreen;
+
 @Mod("itemrender")
 public class ItemRenderMod {
     
     private static final Logger LOGGER = LogManager.getLogger("Item Render");
 
-    public static float renderScale = 1.0F;
-
     public ItemRenderMod() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener(ItemRenderMod::noticeOnServer);
         bus.addListener(ItemRenderMod::init);
-        MinecraftForge.EVENT_BUS.addListener(ItemRenderMod::serverStarting);
         ForgeConfigSpec.Builder specBuilder;
         new ItemRenderConfig(specBuilder = new ForgeConfigSpec.Builder());
         ModLoadingContext context = ModLoadingContext.get();
-        context.registerConfig(ModConfig.Type.CLIENT, specBuilder.build());
+        context.registerConfig(ModConfig.Type.CLIENT, ItemRenderConfig.theSpec = specBuilder.build());
         context.registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (serverVer, isDedicated) -> true));
-        MinecraftForge.EVENT_BUS.register(this);
+        context.registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, () -> ConfigScreen::new);
     }
 
     private static void noticeOnServer(FMLDedicatedServerSetupEvent event) {
         LOGGER.warn("Item Render is meant to be client-side only. ");
-        LOGGER.warn("Installing this mod on dedicated server will do nothing.");
-        LOGGER.warn("Please remove this mod and restart your server.");
+        LOGGER.warn("Installing this mod on dedicated server will do nothing. ");
+        LOGGER.warn("Please remove this mod and restart your server. ");
     }
 
     private static void init(FMLClientSetupEvent event) {
@@ -68,10 +67,6 @@ public class ItemRenderMod {
         MinecraftForge.EVENT_BUS.register(new KeybindToggleRender());
         MinecraftForge.EVENT_BUS.register(new KeybindRenderCurrentPlayer(ItemRenderConfig.playerSize.get()));
         MinecraftForge.EVENT_BUS.register(new KeybindExport());
-    }
-
-    private static void serverStarting(FMLServerStartingEvent event) {
-        new CommandItemRender(event.getCommandDispatcher());
     }
 
 }

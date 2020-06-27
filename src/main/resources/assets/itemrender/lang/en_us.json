@@ -8,12 +8,20 @@
   "item_render.key.export": "Export Mods",
   "item_render.key.currentplayer": "Render Current Player",
 
-  "item_render.config.mainblock": "Main size of exported block image",
-  "item_render.config.gridblock": "Grid size of exported block image",
-  "item_render.config.mainentity": "Main size of exported entity image",
-  "item_render.config.gridentity": "Grid size of exported entity image",
+  "item_render.config": "Item Render Configuration",
+  "item_render.config.main_block": "Main size of exported block image",
+  "item_render.config.grid_block": "Grid size of exported block image",
+  "item_render.config.main_entity": "Main size of exported entity image",
+  "item_render.config.grid_entity": "Grid size of exported entity image",
   "item_render.config.player": "Size of exported player image",
   "item_render.config.vanilla": "Export Vanilla items",
   "item_render.config.debug": "Enable debug mode",
-  "item_render.config.blacklist": "Export blacklist, use registry name of blocks/items"
+  "item_render.config.fancy_printing": "Enable fancy printing",
+  "item_render.config.blacklist": "Export blacklist, use registry name of blocks/items",
+  "item_render.config.render_scale": "Render scale factor",
+
+  "item_render.gui.config.reset": "Reset (NYI)",
+  "item_render.gui.config.save": "Save",
+  "item_render.gui.config.enabled": "Enabled",
+  "item_render.gui.config.disabled": "Disabled"
 }
