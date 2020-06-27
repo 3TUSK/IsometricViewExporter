@@ -121,10 +121,10 @@ public final class ConfigList extends AbstractOptionList<ConfigList.ConfigEntry<
 
         public BooleanConfigEntry(ForgeConfigSpec.BooleanValue configEntry, FontRenderer fontRenderer) {
             super(configEntry, fontRenderer);
-            this.toggle = new Button(0, 0, 60, 20, I18n.format(this.configEntry.get() ? "item_render.gui.config.enabled" : 
+            this.toggle = new Button(0, 0, 60, 20, I18n.format(configEntry.get() ? "item_render.gui.config.enabled" : 
                 "item_render.gui.config.disabled", ObjectArrays.EMPTY_ARRAY), button -> {
-                    boolean previous = this.configEntry.get();
-                    this.configEntry.set(!previous);
+                    boolean previous = configEntry.get();
+                    configEntry.set(!previous);
                     button.setMessage(I18n.format(previous ? "item_render.gui.config.disabled" : 
                         "item_render.gui.config.enabled", ObjectArrays.EMPTY_ARRAY));
             });
