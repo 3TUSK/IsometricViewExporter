@@ -43,7 +43,7 @@ import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.common.ForgeConfigSpec;
 
-public final class ConfigList extends AbstractOptionList<ConfigList.ConfigEntry> {
+public final class ConfigList extends AbstractOptionList<ConfigList.ConfigEntry<?>> {
 
     public ConfigList(Minecraft mc, ConfigScreen screen) {
         // width, height, top, bottom, itemHeight
@@ -60,19 +60,19 @@ public final class ConfigList extends AbstractOptionList<ConfigList.ConfigEntry>
         this.addEntry(new BooleanConfigEntry(ItemRenderConfig.useFancyPrinting, mc.fontRenderer));
     }
 
-    public static abstract class ConfigEntry extends AbstractOptionList.Entry<ConfigEntry> {
+    public static abstract class ConfigEntry<E> extends AbstractOptionList.Entry<ConfigEntry<?>> {
         protected final FontRenderer font;
-        protected final ForgeConfigSpec.ConfigValue<?> configEntry;
+        protected final ForgeConfigSpec.ConfigValue<E> configEntry;
         protected final ForgeConfigSpec.ValueSpec configEntrySpec;
 
-        protected ConfigEntry(ForgeConfigSpec.ConfigValue<?> configEntry, FontRenderer fontRenderer) {
+        protected ConfigEntry(ForgeConfigSpec.ConfigValue<E> configEntry, FontRenderer fontRenderer) {
             this.font = fontRenderer;
             this.configEntry = configEntry;
             this.configEntrySpec = ItemRenderConfig.theSpec.get(configEntry.getPath());
         }
     }
 
-    public static abstract class NumberConfigEntry<T extends Number> extends ConfigEntry {
+    public static abstract class NumberConfigEntry<T extends Number> extends ConfigEntry<T> {
         protected final TextFieldWidget input;
 
         protected NumberConfigEntry(ForgeConfigSpec.ConfigValue<T> configEntry, Function<String, T> parser, FontRenderer fontRenderer) {
@@ -115,7 +115,7 @@ public final class ConfigList extends AbstractOptionList<ConfigList.ConfigEntry>
         }
     }
     
-    public static final class BooleanConfigEntry extends ConfigEntry {
+    public static final class BooleanConfigEntry extends ConfigEntry<Boolean> {
 
         private final Button toggle;
 
