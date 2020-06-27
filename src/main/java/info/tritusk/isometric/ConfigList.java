@@ -59,16 +59,6 @@ public final class ConfigList extends AbstractOptionList<ConfigList.ConfigEntry<
         this.addEntry(new BooleanConfigEntry(ItemRenderConfig.exportVanillaItems, mc.fontRenderer));
         this.addEntry(new BooleanConfigEntry(ItemRenderConfig.useFancyPrinting, mc.fontRenderer));
     }
-/*
-    @Override
-    protected int getScrollbarPosition() {
-        return super.getScrollbarPosition() + 35;
-    }
-
-    @Override
-    public int getRowWidth() {
-        return super.getRowWidth() + 32;
-    }*/
 
     public static abstract class ConfigEntry<T> extends AbstractOptionList.Entry<ConfigEntry<T>> {
         protected final FontRenderer font;
