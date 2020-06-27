@@ -1,6 +1,6 @@
 modLoader="javafml"
-
 loaderVersion="[31,)"
+issueTrackerURL="https://github.com/3TUSK/IsometricViewExporter/issues"
 
 [[mods]]
 modId="itemrender"
