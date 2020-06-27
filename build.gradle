@@ -19,11 +19,14 @@ apply plugin: 'maven-publish'
 
 version = "4.0"
 group = 'cn.mcmod'
-archivesBaseName = 'IsometricViewExporter'
+archivesBaseName = 'IsometricViewExporter-1.15'
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
-compileJava.options.encoding = 'UTF-8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+    options.encoding = 'UTF-8'
+}
 
 minecraft {
     mappings channel: 'snapshot', version: '20200513-1.15.1'
@@ -79,6 +82,37 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifact reobfArtifact
+            pom {
+                name = 'Isometric View Exporter for Minecraft 1.15'
+                description = 'A fork of ItemRender with fixes and features.'
+                url = 'https://github.com/3TUSK/IsometricViewExporter'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'https://github.com/3TUSK/IsometricViewExporter/blob/mc1.15-forge/LICENSE'
+                    }
+                    license {
+                        name = 'Unlicense'
+                        url = 'https://unlicense.org/'
+                        comments = 'Only applicable to package info.tritusk.isometric'
+                    }
+                }
+                developers {
+                    developer {
+                        id = '3TUSK'
+                        name = '3TUSK'
+                    }
+                }
+                issueManagement {
+                    system = 'GitHub Issues'
+                    url = 'https://github.com/3TUSK/IsometricViewExporter/issues'
+                }
+                scm {
+                    url = 'https://github.com/3TUSK/IsometricViewExporter'
+                    connection = 'scm:git:git://github.com/3TUSK/IsometricViewExporter.git'
+                    developerConnection = 'scm:git:git@github.com:3TUSK/IsometricViewExporter.git'
+                }
+            }
         }
     }
     repositories {
