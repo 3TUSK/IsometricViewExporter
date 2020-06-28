@@ -81,6 +81,9 @@ def reobfArtifact = artifacts.add('default', reobfFile) {
 publishing {
     publications {
         release(MavenPublication) {
+            groupId = "cn.mcmod"
+            artifactId = "IsometricViewExporter-1.15"
+
             artifact reobfArtifact
             pom {
                 name = 'Isometric View Exporter for Minecraft 1.15'
@@ -133,6 +136,9 @@ tasks.withType(PublishToMavenRepository) {
     }
 }
 
+/**
+ * A simple task to pass down the artifact name and path to other GitHub actions.
+ */
 task("githubActionOutput") {
     onlyIf {
         System.env.GITHUB_ACTIONS

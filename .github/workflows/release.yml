@@ -29,10 +29,12 @@ jobs:
         # We use Bash parameter expansion to do find-and-replace.
         # https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
         run: |
-          changelog=`git log --pretty="format:%H: %s" $(git describe --tags --abbrev=0 "$CURRENT"^)..$CURRENT`
+          current_tag=${CURRENT/ref\/tags\//}
+          last_tag=`git describe --tags --abbrev=0 "$current_tag"^`
+          changelog=`git log --pretty="format:%H: %s" ${last_tag}..$current_tag`
           changelog="${changelog//'%'/'%25'}"
           changelog="${changelog//$'\n'/'  %0A'}"
-          echo "::set-output name=value::$changelog"
+          echo "::set-output name=value::Change set since ${last_tag}:  %0A%0A$changelog"
       - name: GitHub Release
         id: create_release
         uses: actions/create-release@v1.1.1
