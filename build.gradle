@@ -118,7 +118,7 @@ publishing {
     repositories {
         maven {
             name = "archive"
-            url = "https://maven.hub.tritusk.info/releases/"
+            url = "https://maven.hub.tritusk.info/releases"
             credentials {
                 username = System.env.MAVEN_USERNAME
                 password = System.env.MAVEN_PASSWORD
@@ -138,7 +138,7 @@ task("githubActionOutput") {
         System.env.GITHUB_ACTIONS
     }
     doLast {
-        println "::set-output nane=artifact_path::$buildDir/reobfJar/output.jar"
+        println "::set-output name=artifact_path::$buildDir/reobfJar/output.jar"
         println "::set-output name=artifach_name::$archivesBaseName-${version}.jar"
     }
 }
