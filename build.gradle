@@ -80,7 +80,7 @@ def reobfArtifact = artifacts.add('default', reobfFile) {
 }
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        release(MavenPublication) {
             artifact reobfArtifact
             pom {
                 name = 'Isometric View Exporter for Minecraft 1.15'
@@ -117,7 +117,28 @@ publishing {
     }
     repositories {
         maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
+            name = "archive"
+            url = "https://maven.hub.tritusk.info/release/"
+            credentials {
+                username = System.env.MAVEN_USERNAME
+                password = System.env.MAVEN_PASSWORD
+            }
         }
+    }
+}
+
+tasks.withType(PublishToMavenRepository) {
+    onlyIf {
+        System.env.MAVEN_USERNAME && System.env.MAVEN_PASSWORD
+    }
+}
+
+task("githubActionOutput") {
+    onlyIf {
+        System.env.GITHUB_ACTIONS
+    }
+    doLast {
+        println "::set-output nane=artifact_path::$buildDir/reobfJar/output.jar"
+        println "::set-output name=artifach_name::$archivesBaseName-${version}.jar"
     }
 }

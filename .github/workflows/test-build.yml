@@ -8,6 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
-      - name: "Build"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
         run: ./gradlew build --stacktrace

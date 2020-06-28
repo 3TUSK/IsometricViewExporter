@@ -1,0 +1,53 @@
+name: test-build
+on:
+  push:
+    tags:
+      - "**"
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Maven Publish
+        id: maven_publish
+        env:
+          MAVEN_USERNAME: ${{ secrets.USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.PASSWORD }}
+        run: ./gradlew publishReleasePublicationToArchiveRepository githubActionOutput
+      - name: Generate Changelog
+        id: changelog
+        shell: bash
+        # Special thanks to this post on Stack Overflow regarding change set between two tags:
+        # https://stackoverflow.com/questions/12082981
+        # Special thanks to this issue ticket regarding escaping newline:
+        # https://github.com/actions/create-release/issues/25
+        # We use Bash parameter expansion to do find-and-replace.
+        # https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+        run: |
+          changelog=`git log --pretty="format:%H: %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD`
+          changelog="${changelog//'%'/'%25'}"
+          changelog="${changelog//$'\n'/'  %0A'}"
+          echo "::set-output name=value::$changelog"
+      - name: GitHub Release
+        id: create_release
+        uses: actions/create-release@v1.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: |
+            ${{ steps.changelog.outputs.value }}
+      - name: GitHub Release Artifact
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.maven_publish.outputs.artifach_path }}
+          asset_name: ${{ steps.maven_publish.outputs.artifach_name }}
+          # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+          asset_content_type: "application/java-archive"
