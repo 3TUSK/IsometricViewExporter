@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # Fetch all history 
+          fetch-depth: 0
       - name: Maven Publish
         id: maven_publish
         env:
