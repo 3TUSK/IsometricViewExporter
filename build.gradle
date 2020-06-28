@@ -139,6 +139,6 @@ task("githubActionOutput") {
     }
     doLast {
         println "::set-output name=artifact_path::$buildDir/reobfJar/output.jar"
-        println "::set-output name=artifach_name::$archivesBaseName-${version}.jar"
+        println "::set-output name=artifact_name::$archivesBaseName-${version}.jar"
     }
 }

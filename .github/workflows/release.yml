@@ -18,14 +18,18 @@ jobs:
       - name: Generate Changelog
         id: changelog
         shell: bash
+        env:
+          CURRENT: ${{ github.ref }}
         # Special thanks to this post on Stack Overflow regarding change set between two tags:
         # https://stackoverflow.com/questions/12082981
+        # Do note that actions/checkout will enter detach mode by default, so you won't have 
+        # access to HEAD ref. Use GitHub-Action-supplied `github.ref` instead.
         # Special thanks to this issue ticket regarding escaping newline:
         # https://github.com/actions/create-release/issues/25
         # We use Bash parameter expansion to do find-and-replace.
         # https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
         run: |
-          changelog=`git log --pretty="format:%H: %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD`
+          changelog=`git log --pretty="format:%H: %s" $(git describe --tags --abbrev=0 "$CURRENT"^)..$CURRENT`
           changelog="${changelog//'%'/'%25'}"
           changelog="${changelog//$'\n'/'  %0A'}"
           echo "::set-output name=value::$changelog"
@@ -47,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.maven_publish.outputs.artifach_path }}
-          asset_name: ${{ steps.maven_publish.outputs.artifach_name }}
+          asset_path: ${{ steps.maven_publish.outputs.artifact_path }}
+          asset_name: ${{ steps.maven_publish.outputs.artifact_name }}
           # https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
           asset_content_type: "application/java-archive"
