@@ -118,7 +118,7 @@ publishing {
     repositories {
         maven {
             name = "archive"
-            url = "https://maven.hub.tritusk.info/release/"
+            url = "https://maven.hub.tritusk.info/releases/"
             credentials {
                 username = System.env.MAVEN_USERNAME
                 password = System.env.MAVEN_PASSWORD
