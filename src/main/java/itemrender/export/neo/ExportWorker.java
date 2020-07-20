@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,9 +60,12 @@ public class ExportWorker implements Runnable {
         boolean exportVanilla = ItemRenderConfig.exportVanillaItems.get();
         Minecraft mc = Minecraft.getInstance();
         LanguageManager langManager = mc.getLanguageManager();
-        String langCode = langManager.getCurrentLanguage().getCode();
+        String currentLang = langManager.getCurrentLanguage().getCode();
         HashMap<String, ArrayList<ItemEntry>> itemData = new HashMap<>();
         HashMap<String, ArrayList<EntityEntry>> entityData = new HashMap<>();
+        HashSet<String> langCodes = new HashSet<>(ItemRenderConfig.langCodes.get());
+        langCodes.removeIf(lang -> langManager.getLanguage(lang) == null);
+        final int numLangCodes = langCodes.size();
         
         LOGGER.debug(MARKER, "Dumping item data");
         itemFrame.begin();
@@ -79,7 +83,7 @@ public class ExportWorker implements Runnable {
             ItemStack instance = e.example = new ItemStack(item);
             e.maxStackSize = instance.getMaxStackSize();
             e.maxDamage = instance.getMaxDamage();
-            (e.name = new Object2ObjectArrayMap<>(2)).put(langCode, I18n.format(instance.getDisplayName().getFormattedText(), ObjectArrays.EMPTY_ARRAY));
+            e.name = new Object2ObjectArrayMap<>(numLangCodes);
             (e.icon = new Object2ObjectArrayMap<>(2)).put("small", Renderer.getItemBase64(e.example, itemFrame, mc.getItemRenderer()));
             itemFrame.clear();
             entries.add(e);
@@ -109,7 +113,7 @@ public class ExportWorker implements Runnable {
             EntityEntry e = new EntityEntry();
             e.entityType = entityType;
             e.registryName = entityType.getRegistryName().toString();
-            (e.name = new Object2ObjectArrayMap<>(2)).put(langCode, I18n.format(entityType.getTranslationKey(), ObjectArrays.EMPTY_ARRAY));
+            e.name = new Object2ObjectArrayMap<>(numLangCodes);
             e.icon = Renderer.getEntityBase64(entityType, entityFrame);
             // Hack: create a fake entity to determine if it is "living".
             e.living = entityType.create(mc.world) instanceof LivingEntity;
@@ -120,12 +124,14 @@ public class ExportWorker implements Runnable {
 
         LOGGER.debug(MARKER, "Dumping translations");
         // Hack again: force reloading language to get translations
-        langManager.setCurrentLanguage(langManager.getLanguage("zh_cn"));
-        langManager.onResourceManagerReload(mc.getResourceManager());
-        itemData.values().forEach(c -> c.forEach(e -> e.name.put("zh_cn", e.example.getDisplayName().getFormattedText())));
-        entityData.values().forEach(c -> c.forEach(e -> e.name.put("zh_cn", I18n.format(e.entityType.getTranslationKey(), ObjectArrays.EMPTY_ARRAY))));
+        for (final String langCode : langCodes) {
+            langManager.setCurrentLanguage(langManager.getLanguage(langCode));
+            langManager.onResourceManagerReload(mc.getResourceManager());
+            itemData.values().forEach(c -> c.forEach(e -> e.name.put(langCode, e.example.getDisplayName().getFormattedText())));
+            entityData.values().forEach(c -> c.forEach(e -> e.name.put(langCode, I18n.format(e.entityType.getTranslationKey(), ObjectArrays.EMPTY_ARRAY))));
+        }
         // Recover
-        langManager.setCurrentLanguage(langManager.getLanguage(langCode));
+        langManager.setCurrentLanguage(langManager.getLanguage(currentLang));
         langManager.onResourceManagerReload(mc.getResourceManager());
         LOGGER.debug(MARKER, "Dumped translations");
 

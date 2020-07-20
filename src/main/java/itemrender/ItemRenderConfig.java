@@ -1,5 +1,6 @@
 package itemrender;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,6 +27,7 @@ public final class ItemRenderConfig {
     public static ForgeConfigSpec.BooleanValue exportVanillaItems;
     public static ForgeConfigSpec.BooleanValue useFancyPrinting;
     public static ForgeConfigSpec.ConfigValue<List<String>> blacklist;
+    public static ForgeConfigSpec.ConfigValue<List<String>> langCodes;
 
     public ItemRenderConfig(ForgeConfigSpec.Builder specBuilder) {
         specBuilder.comment("Options used by Item Render Mod").push("General");
@@ -63,6 +65,9 @@ public final class ItemRenderConfig {
         blacklist = specBuilder.comment("Export blacklist, use registry name of blocks/items")
             .translation("item_render.config.blacklist")
             .define("Blacklist", Collections.emptyList());
+        langCodes = specBuilder.comment("List of language codes that are to be used when exporting")
+            .translation("item_render.config.lang_codes")
+            .define("LangCodes", Arrays.asList("en_us", "ja_jp", "zh_cn"));
         specBuilder.pop();
     }
 }
