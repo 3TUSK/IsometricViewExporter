@@ -29,6 +29,7 @@
 package info.tritusk.isometric;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 
@@ -52,16 +53,22 @@ public final class ImageUtil {
         return img;
     }
 
-    public static void saveImage(NativeImage img, File dest) {
-        saveImage(img, dest.toPath());
+    public static boolean saveImage(NativeImage img, File dest) {
+        return saveImage(img, dest.toPath());
     }
 
-    public static void saveImage(NativeImage img, Path path) {
+    public static boolean saveImage(NativeImage img, Path path) {
         try {
+            final Path parentDir = path.getParent();
+            if (!Files.isDirectory(parentDir)) {
+                Files.createDirectories(parentDir);
+            }
             img.write(path);
+            return true;
         } catch (Exception e) {
             LOGGER.error("Error occured while saving image to {}. Details: ", path);
             LOGGER.catching(e);
+            return false;
         } finally {
             img.close();
         }

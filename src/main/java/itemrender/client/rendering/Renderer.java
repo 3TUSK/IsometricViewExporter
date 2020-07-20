@@ -131,35 +131,36 @@ public class Renderer {
         RenderSystem.popMatrix();
     }
 
-    public static void renderItem(ItemStack stack, FBOHelper fbo, String suffix, ItemRenderer itemRenderer) {
+    public static boolean renderItem(ItemStack stack, FBOHelper fbo, String suffix, ItemRenderer itemRenderer) {
         Minecraft mc = Minecraft.getInstance();
         doRenderItem(stack, fbo, itemRenderer);
         try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
-            ImageUtil.saveImage(image, new File(mc.gameDir, String.format("rendered/item_%s_%s.png", 
+            return ImageUtil.saveImage(image, new File(mc.gameDir, String.format("rendered/item_%s_%s.png", 
                 stack.getItem().getRegistryName().toString().replace(':', '.'), suffix)));
+        } finally {
+            fbo.unbindTexture();
         }
-        fbo.unbindTexture();
     }
 
     public static String getItemBase64(ItemStack stack, FBOHelper fbo, ItemRenderer itemRenderer) {
         doRenderItem(stack, fbo, itemRenderer);
-        String base64 = "";
         try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
-            base64 = ImageUtil.base64(image);
+            return ImageUtil.base64(image);
+        } finally {
+            fbo.unbindTexture();
         }
-        fbo.unbindTexture();
-        return base64;
     }
 
-    public static void renderEntity(LivingEntity entity, FBOHelper fbo, String filenameSuffix, boolean renderPlayer) {
+    public static boolean renderEntity(LivingEntity entity, FBOHelper fbo, String filenameSuffix, boolean renderPlayer) {
         Minecraft mc = Minecraft.getInstance();
         doRenderEntity(entity, fbo, renderPlayer);
         String name = entity.getType().getRegistryName().toString().replace(':', '.');
         try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
-            ImageUtil.saveImage(image, new File(mc.gameDir, renderPlayer ? "rendered/player.png"
+            return ImageUtil.saveImage(image, new File(mc.gameDir, renderPlayer ? "rendered/player.png"
                 : String.format("rendered/entity_%s%s.png", name, filenameSuffix)));
+        } finally {
+            fbo.unbindTexture();
         }
-        fbo.unbindTexture();
     }
 
     public static String getEntityBase64(EntityType<?> type, FBOHelper fbo) {
@@ -167,12 +168,11 @@ public class Renderer {
         Entity entity = type.create(minecraft.world);
         if (entity instanceof LivingEntity) {
             doRenderEntity((LivingEntity) entity, fbo, false);
-            String base64 = "";
             try (NativeImage image = ImageUtil.dumpFrom(fbo.frame)) {
-                base64 = ImageUtil.base64(image);
+                return ImageUtil.base64(image);
+            } finally {
+                fbo.unbindTexture();
             }
-            fbo.unbindTexture();
-            return base64;
         } else {
             return "";
         }

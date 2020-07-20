@@ -44,11 +44,15 @@ public class KeybindRenderInventoryBlock {
                     this.fbo.init();
                 }
                 this.fbo.begin();
-                Renderer.renderItem(current, this.fbo, filenameSuffix, mc.getItemRenderer());
+                if (Renderer.renderItem(current, this.fbo, filenameSuffix, mc.getItemRenderer())) {
+                    mc.player.sendMessage(new StringTextComponent(String.format("Saved as rendered/item_%s%s.png", 
+                        current.getItem().getRegistryName().toString().replace(':', '.'), filenameSuffix)));
+                } else {
+                    mc.player.sendMessage(new StringTextComponent("Failed to save rendered image, check your latest.log or debug.log for more information!"));
+                }
                 this.fbo.end();
                 this.fbo.clear();
-                mc.player.sendMessage(new StringTextComponent(String.format("Saved as rendered/item_%s%s.png", 
-                    current.getItem().getRegistryName().toString().replace(':', '.'), filenameSuffix)));
+                
             }
         }
     }
