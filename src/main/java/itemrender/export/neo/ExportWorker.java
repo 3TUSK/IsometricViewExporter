@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,6 +29,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -83,6 +85,8 @@ public class ExportWorker implements Runnable {
             ItemStack instance = e.example = new ItemStack(item);
             e.maxStackSize = instance.getMaxStackSize();
             e.maxDamage = instance.getMaxDamage();
+            e.tags = ItemTags.getCollection().getOwningTags(item).stream().map(Object::toString).collect(Collectors.toList());
+            e.ores = String.join(",", e.tags);
             e.name = new Object2ObjectArrayMap<>(numLangCodes);
             (e.icon = new Object2ObjectArrayMap<>(2)).put("small", Renderer.getItemBase64(e.example, itemFrame, mc.getItemRenderer()));
             itemFrame.clear();
